@@ -6,32 +6,36 @@ var NodeGeocoder = require('node-geocoder');
 
 const geocodeOptions = {
   provider: 'google',
-  apiKey: ''
+  apiKey: 'AIzaSyAM7VdvORTJeo8DihlqK4wT1dHCF6m2VpY'
 }
 
 router.get('/:zip', function(req, res, next) {
   var api = new Showtimes( req.params.zip );
    
   api.getTheaters(function (error, theaters) {
-    if (error) {
+    if (error) { 
       throw error
     }
    
     const addresses = theaters.map( theater => theater.address )
 
     NodeGeocoder( geocodeOptions ).batchGeocode( addresses, (err, result) => {
-      const geocodes = result.map( entry => entry.value[0] )
+      if( error ) {
+        console.log( error )
+      } else {
+        const geocodes = result.map( entry => entry.value[0] )
 
-      const geocodedTheaters = theaters.map( (theater, index) => {
-        const position = {
-          lat: geocodes[ index ].latitude, 
-          lng: geocodes[ index ].longitude
-        }
+        const geocodedTheaters = theaters.map( (theater, index) => {
+          const position = {
+            lat: geocodes[ index ].latitude, 
+            lng: geocodes[ index ].longitude
+          }
 
-        return Object.assign( theater, { position })
-      })
+          return Object.assign( theater, { position })
+        })
 
-      res.send( geocodedTheaters );
+        res.send( geocodedTheaters );        
+      }
     })
   });
 });
