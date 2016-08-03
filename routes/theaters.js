@@ -2,6 +2,13 @@ var express = require('express');
 var router = express.Router();
 var Showtimes = require('showtimes');
 
+var NodeGeocoder = require('node-geocoder');
+
+const geocodeOptions = {
+  provider: 'google',
+  apiKey: ''
+}
+
 router.get('/:zip', function(req, res, next) {
   var api = new Showtimes( req.params.zip );
    
@@ -10,7 +17,22 @@ router.get('/:zip', function(req, res, next) {
       throw error
     }
    
-    res.send( theaters );
+    const addresses = theaters.map( theater => theater.address )
+
+    NodeGeocoder( geocodeOptions ).batchGeocode( addresses, (err, result) => {
+      const geocodes = result.map( entry => entry.value[0] )
+
+      const geocodedTheaters = theaters.map( (theater, index) => {
+        const position = {
+          lat: geocodes[ index ].latitude, 
+          lng: geocodes[ index ].longitude
+        }
+
+        return Object.assign( theater, { position })
+      })
+
+      res.send( geocodedTheaters );
+    })
   });
 });
 
